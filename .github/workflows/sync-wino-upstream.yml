@@ -1,0 +1,55 @@
+name: Sync Wino Upstream
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-wino-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout custom-main
+        uses: actions/checkout@v7
+        with:
+          ref: custom-main
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream and fetch branches
+        run: |
+          git remote add upstream https://github.com/bkaankose/Wino-Mail.git
+          git fetch upstream main
+          git fetch origin main custom-main
+
+      - name: Sync clean main branch
+        run: |
+          git checkout main
+          git reset --hard origin/main
+          git merge --ff-only upstream/main
+          git push origin main
+
+      - name: Merge upstream into custom-main
+        run: |
+          git checkout custom-main
+          git reset --hard origin/custom-main
+
+          if git merge --no-edit upstream/main; then
+            git push origin custom-main
+          else
+            git merge --abort || true
+            echo "::error::Upstream merge conflict detected. custom-main was NOT changed."
+            exit 1
+          fi

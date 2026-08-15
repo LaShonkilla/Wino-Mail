@@ -174,7 +174,7 @@
             Background="{ThemeResource ReadingPaneBackgroundColorBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
-            CornerRadius="8"
+            CornerRadius="20"
             Translation="0,0,20">
             <Border.Shadow>
                 <ThemeShadow />
@@ -508,8 +508,8 @@
             Background="{ThemeResource ReadingPaneBackgroundColorBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
-            CornerRadius="8">
-            <Grid Margin="1" CornerRadius="8">
+            CornerRadius="20">
+            <Grid Margin="1" CornerRadius="20">
 
                 <Grid Background="White" Visibility="{x:Bind helpers:XamlHelpers.ReverseBoolToVisibilityConverter(IsDarkEditor), Mode=OneWay}" />
 

@@ -1,0 +1,62 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:xaml="using:Microsoft.UI.Xaml">
+
+    <x:String x:Key="ThemeName">Mocha</x:String>
+    <x:String x:Key="ThemeBackgroundImage">ms-appdata:///local/CustomWallpaper.jpg</x:String>
+
+    <SolidColorBrush
+        x:Key="WinoApplicationBackgroundColor"
+        Color="Transparent" />
+
+    <!--  Navigation View Settings  -->
+    <xaml:CornerRadius x:Key="NavigationViewContentGridCornerRadius">20,0,0,0</xaml:CornerRadius>
+    <xaml:CornerRadius x:Key="OverlayCornerRadius">0,0,0,0</xaml:CornerRadius>
+    <xaml:CornerRadius x:Key="ControlCornerRadius">16,16,16,16</xaml:CornerRadius>
+    <xaml:CornerRadius x:Key="FooterAppModeSwitcherBorder">16,16,16,16</xaml:CornerRadius>
+    <Thickness x:Key="NavigationViewContentMargin">0,0,0,0</Thickness>
+
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Name="Light">
+            <!--  Reading Page Date/Name Group Header Background  -->
+            <SolidColorBrush x:Key="MailListHeaderBackgroundColor">#000000</SolidColorBrush>
+
+            <Color x:Key="MainCustomThemeColor">#000000</Color>
+            <SolidColorBrush x:Key="CalendarDefaultHourBackgroundBrush" Color="{StaticResource MainCustomThemeColor}" Opacity="0.55" />
+            <SolidColorBrush x:Key="CalendarHoverHourBackgroundBrush" Color="{StaticResource MainCustomThemeColor}" Opacity="0.7" />
+            <SolidColorBrush x:Key="CalendarWorkHourBackgroundBrush" Color="{StaticResource MainCustomThemeColor}" Opacity="0.85" />
+            <SolidColorBrush x:Key="CalendarSelectedHourBackgroundBrush">#4D0078D4</SolidColorBrush>
+
+            <!--  Wallpaper overlay surfaces  -->
+            <SolidColorBrush x:Key="WinoContentZoneBackgroud" Color="{StaticResource MainCustomThemeColor}" />
+            <SolidColorBrush x:Key="ReadingPaneBackgroundColorBrush" Color="{StaticResource MainCustomThemeColor}" />
+
+            <SolidColorBrush x:Key="AppBarBackgroundColor" Color="{StaticResource MainCustomThemeColor}" />
+            <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="{StaticResource MainCustomThemeColor}" />
+            <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="{StaticResource MainCustomThemeColor}" />
+            <SolidColorBrush x:Key="WelcomeOverlayBrush" Color="{StaticResource MainCustomThemeColor}" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Name="Dark">
+            <!--  Reading Page Date/Name Group Header Background  -->
+            <SolidColorBrush x:Key="MailListHeaderBackgroundColor">#2a2319</SolidColorBrush>
+
+            <Color x:Key="MainCustomThemeColor">#120f0a</Color>
+            <SolidColorBrush x:Key="CalendarDefaultHourBackgroundBrush" Color="{StaticResource MainCustomThemeColor}" Opacity="0.55" />
+            <SolidColorBrush x:Key="CalendarHoverHourBackgroundBrush" Color="{StaticResource MainCustomThemeColor}" Opacity="0.7" />
+            <SolidColorBrush x:Key="CalendarWorkHourBackgroundBrush" Color="{StaticResource MainCustomThemeColor}" Opacity="0.85" />
+            <SolidColorBrush x:Key="CalendarSelectedHourBackgroundBrush">#905c22</SolidColorBrush>
+
+            <!--  Wallpaper overlay surfaces  -->
+            <SolidColorBrush x:Key="WinoContentZoneBackgroud" Color="{StaticResource MainCustomThemeColor}" />
+            <SolidColorBrush x:Key="ReadingPaneBackgroundColorBrush" Color="{StaticResource MainCustomThemeColor}" />
+
+            <SolidColorBrush x:Key="AppBarBackgroundColor" Color="Transparent" />
+            <SolidColorBrush x:Key="NavigationViewContentBackground" Color="{StaticResource MainCustomThemeColor}" />
+            <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="{StaticResource MainCustomThemeColor}" />
+            <SolidColorBrush x:Key="WelcomeOverlayBrush" Color="{StaticResource MainCustomThemeColor}" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

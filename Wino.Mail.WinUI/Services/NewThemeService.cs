@@ -9,7 +9,10 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Messaging;
 using CommunityToolkit.WinUI;
 using CommunityToolkit.WinUI.Helpers;
+using Microsoft.UI.Composition;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Windows.Storage;
@@ -27,6 +30,7 @@ using Wino.Mail.WinUI.Interfaces;
 using Wino.Mail.WinUI.Models.Personalization;
 using Wino.Mail.WinUI.Services;
 using Wino.Messaging.Client.Shell;
+using WinRT;
 using WinUIEx;
 
 namespace Wino.Services;
@@ -44,6 +48,8 @@ public class NewThemeService : INewThemeService
     private static string _nightyThemeId = "5b65e04e-fd7e-4c2d-8221-068d3e02d23a";
     private static string _snowflakeThemeId = "e143ddde-2e28-4846-9d98-dad63d6505f1";
     private static string _gardenThemeId = "698e4466-f88c-4799-9c61-f0ea1308ed49";
+
+    private static string _mochaThemeId = "7d829c45-b1ac-4b31-9789-f96411d35b6e";
 
     public event EventHandler<ApplicationElementTheme>? ElementThemeChanged;
     public event EventHandler<string>? AccentColorChanged;
@@ -72,6 +78,7 @@ public class NewThemeService : INewThemeService
         new PreDefinedAppTheme("Clouds", Guid.Parse(_cloudsThemeId), "#0984e3", ApplicationElementTheme.Light),
         new PreDefinedAppTheme("Snowflake", Guid.Parse(_snowflakeThemeId), "#4a69bd", ApplicationElementTheme.Light),
         new PreDefinedAppTheme("Garden", Guid.Parse(_gardenThemeId), "#05c46b", ApplicationElementTheme.Light),
+        new PreDefinedAppTheme("Mocha", Guid.Parse(_mochaThemeId), "#8B4513", ApplicationElementTheme.Dark)
     };
 
     public NewThemeService(IConfigurationService configurationService,
@@ -130,6 +137,7 @@ public class NewThemeService : INewThemeService
                 window.DispatcherQueue.TryEnqueue(async () =>
                 {
                     await ApplyCustomThemeAsync(false);
+                    ApplyBackdrop(currentBackdropType);
                 });
             }
         }
@@ -222,11 +230,22 @@ public class NewThemeService : INewThemeService
         isInitialized = true;
     }
 
+    private void ApplyMochaTransparentBackdrop(WindowEx windowEx)
+    {
+        windowEx.SystemBackdrop = new TransparentTintBackdrop();
+    }
+
     public void ApplyBackdrop(WindowBackdropType backdropType)
     {
         if (GetThemeWindow() is not WindowEx windowEx)
+
         {
             Debug.WriteLine("No active WindowEx found, cannot apply backdrop");
+            return;
+        }
+        if (currentApplicationThemeId == Guid.Parse(_mochaThemeId))
+        {
+            ApplyMochaTransparentBackdrop(windowEx);
             return;
         }
 

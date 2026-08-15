@@ -21,15 +21,15 @@
 	</Extensions>
 	
   <Identity
-    Name="58272BurakKSE.WinoMailPreview"
-    Publisher="CN=51FBDAF3-E212-4149-89A2-A2636B3BC911"
+    Name="LaShonkilla.WinoCustom"
+    Publisher="CN=LaShonkilla"
     Version="2.0.30.0" />
 
   <mp:PhoneIdentity PhoneProductId="7b7e90e9-cc55-4409-9769-99b4b5ed6e9b" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Wino Mail</DisplayName>
-    <PublisherDisplayName>Burak KÖSE</PublisherDisplayName>
+    <DisplayName>Wino Custom</DisplayName>
+    <PublisherDisplayName>LaShonkilla</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 

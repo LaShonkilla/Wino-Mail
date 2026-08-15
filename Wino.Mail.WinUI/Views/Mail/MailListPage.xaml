@@ -60,7 +60,7 @@
                 Margin="0,0,4,0"
                 Padding="6,2"
                 Background="{x:Bind helpers:XamlHelpers.GetSolidColorBrushFromHex(BackgroundColorHex), Mode=OneWay}"
-                CornerRadius="4">
+                CornerRadius="20">
                 <TextBlock
                     Foreground="{x:Bind helpers:XamlHelpers.GetCategoryTextBrush(TextColorHex, BackgroundColorHex), Mode=OneWay}"
                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -1294,7 +1294,7 @@
                 AllowFocusOnInteraction="False"
                 AutomationProperties.Name="{x:Bind helpers:XamlHelpers.GetMailGroupDateString(Key)}"
                 Background="{ThemeResource MailListHeaderBackgroundColor}"
-                CornerRadius="6">
+                CornerRadius="20">
                 <TextBlock
                     Padding="12"
                     VerticalAlignment="Center"
@@ -1338,7 +1338,7 @@
             Background="{ThemeResource WinoContentZoneBackgroud}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
-            CornerRadius="8"
+            CornerRadius="20"
             Translation="0,0,20">
             <Border.Shadow>
                 <ThemeShadow />
@@ -1354,7 +1354,7 @@
                 <Grid
                     Margin="0,0,0,5"
                     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-                    CornerRadius="8"
+                    CornerRadius="20"
                     Visibility="{x:Bind ViewModel.PreferencesService.IsMailListActionBarEnabled}">
                     <coreControls:OperationCommandBar
                         HorizontalAlignment="Left"

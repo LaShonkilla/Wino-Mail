@@ -119,6 +119,7 @@
     <Page Remove="AppThemes\Garden.xaml" />
     <Page Remove="AppThemes\Nighty.xaml" />
     <Page Remove="AppThemes\Snowflake.xaml" />
+    <Page Remove="AppThemes\Mocha.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -130,6 +131,7 @@
     <Content Include="AppThemes\Garden.xaml" />
     <Content Include="AppThemes\Nighty.xaml" />
     <Content Include="AppThemes\Snowflake.xaml" />
+    <Content Include="AppThemes\Mocha.xaml" />
     <Content Include="Assets\ReleaseNotes\vnext.md" />
     <Content Include="Assets\UpdateNotes\vnext.json" />
     <Content Include="Assets\UpdateNotes\features.json" />
@@ -324,6 +326,11 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Mail\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="AppThemes\Mocha.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Controls\Calendar\CalendarPeriodControl.xaml">

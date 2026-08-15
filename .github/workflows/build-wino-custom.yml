@@ -1,0 +1,97 @@
+name: Build Wino Custom
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - custom-main
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      PROJECT_PATH: Wino.Mail.WinUI/Wino.Mail.WinUI.csproj
+      NUGET_CONFIG_PATH: ${{ github.workspace }}\nuget.config
+      PACKAGE_OUTPUT_DIR: ${{ github.workspace }}\artifacts\package
+      CERTIFICATE_PFX_PATH: ${{ github.workspace }}\artifacts\signing\WinoCustom.pfx
+
+    steps:
+      - name: Checkout custom-main
+        uses: actions/checkout@v4
+        with:
+          ref: custom-main
+          fetch-depth: 0
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Create signing certificate
+        shell: pwsh
+        env:
+          CERT_BASE64: ${{ secrets.WINO_SIGNING_CERTIFICATE }}
+        run: |
+          New-Item -ItemType Directory -Path (Split-Path $env:CERTIFICATE_PFX_PATH) -Force | Out-Null
+          [IO.File]::WriteAllBytes(
+            $env:CERTIFICATE_PFX_PATH,
+            [Convert]::FromBase64String($env:CERT_BASE64)
+          )
+
+      - name: Restore dependencies
+        shell: pwsh
+        run: |
+          dotnet restore $env:PROJECT_PATH `
+            --configfile $env:NUGET_CONFIG_PATH `
+            -p:Platform=x64 `
+            /p:RestoreConfigFile="$env:NUGET_CONFIG_PATH"
+
+      - name: Build signed MSIX bundle
+        shell: pwsh
+        env:
+          CERT_PASSWORD: ${{ secrets.WINO_SIGNING_PASSWORD }}
+        run: |
+          New-Item -ItemType Directory -Path $env:PACKAGE_OUTPUT_DIR -Force | Out-Null
+
+          dotnet build $env:PROJECT_PATH `
+            --configuration Release `
+            --no-restore `
+            /p:Platform=x64 `
+            /p:RestoreConfigFile="$env:NUGET_CONFIG_PATH" `
+            /p:GenerateAppxPackageOnBuild=true `
+            /p:UapAppxPackageBuildMode=SideloadOnly `
+            /p:AppxBundle=Always `
+            /p:AppxBundlePlatforms="x64" `
+            /p:AppxPackageDir="$env:PACKAGE_OUTPUT_DIR\\" `
+            /p:PackageCertificateKeyFile="$env:CERTIFICATE_PFX_PATH" `
+            /p:PackageCertificatePassword="$env:CERT_PASSWORD" `
+            /p:PackageCertificateThumbprint= `
+            /p:AppxPackageSigningEnabled=true
+
+      - name: Find MSIX bundle
+        id: package
+        shell: pwsh
+        run: |
+          $bundle = Get-ChildItem `
+            -Path $env:PACKAGE_OUTPUT_DIR `
+            -Recurse `
+            -Filter *.msixbundle |
+            Select-Object -First 1
+
+          if (-not $bundle) {
+            throw "No .msixbundle was generated."
+          }
+
+          "bundle=$($bundle.FullName)" >> $env:GITHUB_OUTPUT
+          "name=$($bundle.Name)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Wino-Custom
+          path: ${{ steps.package.outputs.bundle }}

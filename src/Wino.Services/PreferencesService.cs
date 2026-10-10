@@ -641,6 +641,18 @@ public partial class PreferencesService(IConfigurationService configurationServi
         set => SetPropertyAndSave(nameof(CalendarSyncIntervalMinutes), Math.Max(1, value));
     }
 
+    public long TaskLastAutoSynchronizationUtcTicks
+    {
+        get => _configurationService.Get(nameof(TaskLastAutoSynchronizationUtcTicks), 0L);
+        set => SetPropertyAndSave(nameof(TaskLastAutoSynchronizationUtcTicks), Math.Max(0, value));
+    }
+
+    public long ContactLastAutoSynchronizationUtcTicks
+    {
+        get => _configurationService.Get(nameof(ContactLastAutoSynchronizationUtcTicks), 0L);
+        set => SetPropertyAndSave(nameof(ContactLastAutoSynchronizationUtcTicks), Math.Max(0, value));
+    }
+
     public int EmailSyncIntervalMinutes
     {
         get => _configurationService.Get(nameof(EmailSyncIntervalMinutes), 3);

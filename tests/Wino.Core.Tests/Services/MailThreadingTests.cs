@@ -87,7 +87,8 @@ public class MailThreadingTests : IAsyncLifetime
 
         var mimeMessage = draftBase64MimeMessage.GetMimeMessageFromBase64();
 
-        draftMailCopy.MessageId.Should().MatchRegex("^[0-9a-fA-F-]{36}@wino-mail\\.app$");
+        var senderDomain = _account.Address[(_account.Address.LastIndexOf('@') + 1)..];
+        draftMailCopy.MessageId.Should().MatchRegex($"^[0-9a-fA-F-]{{36}}@{System.Text.RegularExpressions.Regex.Escape(senderDomain)}$");
         mimeMessage.MessageId.Should().Be(draftMailCopy.MessageId);
         mimeMessage.Headers[HeaderId.MessageId].Should().Be(MailHeaderExtensions.ToHeaderMessageId(draftMailCopy.MessageId));
         draftMailCopy.DraftSyncState.Should().Be(DraftSyncState.PendingSync);

@@ -86,7 +86,7 @@
     // Dark mode adapts colors for display only. Each adapted element carries an id attribute
     // that a generated stylesheet targets; inline styles stay exactly as authored, and
     // getContent() removes the ids, so the sent HTML never contains dark-mode colors.
-    const composeRootAttribute = "data-wino-compose-root";
+    const composeRootAttribute = "data-compose-root";
     const darkColorAttribute = "data-wino-dk";
     const darkColorStyle = document.createElement("style");
     darkColorStyle.id = "wino-dark-colors";

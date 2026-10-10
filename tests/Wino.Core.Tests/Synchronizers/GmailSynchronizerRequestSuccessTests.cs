@@ -56,8 +56,10 @@ public sealed class GmailSynchronizerRequestSuccessTests
         query.Should().Be("in:archive after:2026/05/15");
     }
 
-    [Fact]
-    public async Task CreateNewMailPackagesAsync_UnmappedDraftWithoutAssignedFolder_DoesNotDereferenceFolder()
+    [Theory]
+    [InlineData(Wino.Core.Domain.Constants.WinoLocalDraftHeader)]
+    [InlineData(Wino.Core.Domain.Constants.LegacyWinoLocalDraftHeader)]
+    public async Task CreateNewMailPackagesAsync_UnmappedDraftWithoutAssignedFolder_DoesNotDereferenceFolder(string draftHeaderName)
     {
         var localDraftId = Guid.NewGuid();
         var changeProcessor = new Mock<IGmailChangeProcessor>(MockBehavior.Strict);
@@ -81,7 +83,7 @@ public sealed class GmailSynchronizerRequestSuccessTests
                 [
                     new MessagePartHeader
                     {
-                        Name = Wino.Core.Domain.Constants.WinoLocalDraftHeader,
+                        Name = draftHeaderName,
                         Value = localDraftId.ToString()
                     }
                 ]

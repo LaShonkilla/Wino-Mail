@@ -4,6 +4,7 @@ using Moq;
 using Wino.Core.Domain.Entities.Shared;
 using Wino.Core.Domain.Enums;
 using Wino.Core.Domain.Interfaces;
+using Wino.Core.Domain.Models.Synchronization;
 using Wino.Core.Services;
 using Wino.Messaging.Server;
 using Wino.Messaging.UI;
@@ -128,14 +129,15 @@ public sealed class ApplicationRuntimeTests
         var runtime = CreateRuntime(_ => Task.CompletedTask, clock, accounts, preferences, messenger);
 
         await Task.WhenAll(runtime.StartAsync(), runtime.StartAsync());
-        await clock.WaitForPeriodicTimersAsync(2);
-        clock.PeriodicTimersCreated.Should().Be(2);
+        // Mail and calendar loops, plus the task and contact due checks.
+        await clock.WaitForPeriodicTimersAsync(4);
+        clock.PeriodicTimersCreated.Should().Be(4);
 
         preferences.SetupGet(x => x.EmailSyncIntervalMinutes).Returns(4);
         preferences.Raise(x => x.PreferenceChanged += null, preferences.Object, nameof(IPreferencesService.EmailSyncIntervalMinutes));
-        await clock.WaitForPeriodicTimersAsync(3);
-        await clock.WaitForActivePeriodsAsync(TimeSpan.FromMinutes(4), TimeSpan.FromMinutes(3));
-        clock.ActivePeriods.Should().BeEquivalentTo(new[] { TimeSpan.FromMinutes(4), TimeSpan.FromMinutes(3) });
+        await clock.WaitForPeriodicTimersAsync(5);
+        await clock.WaitForActivePeriodsAsync(TimeSpan.FromMinutes(4), TimeSpan.FromMinutes(3), TimeSpan.FromMinutes(15), TimeSpan.FromMinutes(15));
+        clock.ActivePeriods.Should().BeEquivalentTo(new[] { TimeSpan.FromMinutes(4), TimeSpan.FromMinutes(3), TimeSpan.FromMinutes(15), TimeSpan.FromMinutes(15) });
 
         var removalRead = Signal();
         accounts.Setup(x => x.GetAccountsAsync()).Returns(() =>
@@ -178,17 +180,150 @@ public sealed class ApplicationRuntimeTests
         runtime.State.Should().Be(ApplicationRuntimeState.Stopped);
     }
 
+    [Fact]
+    public async Task RareModes_SynchronizeOnlyWhenPersistedTimestampIsSixHoursOld()
+    {
+        var clock = new ManualTimeProvider();
+        var account = new MailAccount
+        {
+            Id = Guid.NewGuid(),
+            IsMailAccessGranted = false,
+            IsTaskAccessGranted = true,
+            IsContactAccessGranted = true
+        };
+        var accounts = new Mock<IAccountService>();
+        accounts.Setup(x => x.GetAccountsAsync()).ReturnsAsync(new List<MailAccount> { account });
+        var preferences = new Mock<IPreferencesService>();
+        preferences.SetupGet(x => x.EmailSyncIntervalMinutes).Returns(60);
+        preferences.SetupGet(x => x.CalendarSyncIntervalMinutes).Returns(60);
+        preferences.SetupProperty(x => x.TaskLastAutoSynchronizationUtcTicks, 0L);
+        // Contacts last ran five hours before the clock starts, so they are due after one more hour.
+        var start = DateTimeOffset.UnixEpoch.AddHours(10);
+        clock.Advance(start - clock.GetUtcNow());
+        preferences.SetupProperty(x => x.ContactLastAutoSynchronizationUtcTicks, start.AddHours(-5).UtcTicks);
+
+        var taskSyncs = 0;
+        var contactSyncs = 0;
+        var manager = new Mock<ISynchronizationManager>();
+        manager.Setup(x => x.GetAllSynchronizers()).Returns(Array.Empty<IWinoSynchronizerBase>());
+        manager.Setup(x => x.SynchronizeTasksAsync(It.IsAny<TaskSynchronizationOptions>(), It.IsAny<CancellationToken>()))
+            .Callback(() => Interlocked.Increment(ref taskSyncs))
+            .ReturnsAsync(TaskSynchronizationResult.Empty);
+        manager.Setup(x => x.SynchronizeContactsAsync(It.IsAny<ContactSynchronizationOptions>(), It.IsAny<CancellationToken>()))
+            .Callback(() => Interlocked.Increment(ref contactSyncs))
+            .ReturnsAsync(ContactSynchronizationResult.Empty);
+        var runtime = CreateRuntime(_ => Task.CompletedTask, clock, accounts, preferences, manager: manager);
+
+        await runtime.StartAsync();
+        await clock.WaitForPeriodicTimersAsync(4);
+
+        // Nothing runs at launch, and the first check only starts the task window.
+        taskSyncs.Should().Be(0);
+        contactSyncs.Should().Be(0);
+        await AdvanceAndSettleAsync(clock, TimeSpan.FromMinutes(15));
+        preferences.Object.TaskLastAutoSynchronizationUtcTicks.Should().Be(start.AddMinutes(15).UtcTicks);
+        taskSyncs.Should().Be(0);
+        contactSyncs.Should().Be(0);
+
+        for (var i = 0; i < 4; i++)
+            await AdvanceAndSettleAsync(clock, TimeSpan.FromMinutes(15));
+        contactSyncs.Should().Be(1);
+        taskSyncs.Should().Be(0);
+
+        for (var i = 0; i < 20; i++)
+            await AdvanceAndSettleAsync(clock, TimeSpan.FromMinutes(15));
+        taskSyncs.Should().Be(1);
+        contactSyncs.Should().Be(1);
+
+        await runtime.StopAsync();
+    }
+
+    [Fact]
+    public async Task CreatedAccount_SynchronizesTasksAndContactsWithoutTouchingTheWindow()
+    {
+        var clock = new ManualTimeProvider();
+        var account = new MailAccount
+        {
+            Id = Guid.NewGuid(),
+            IsMailAccessGranted = false,
+            IsTaskAccessGranted = true,
+            IsContactAccessGranted = true
+        };
+        var accounts = new Mock<IAccountService>();
+        accounts.Setup(x => x.GetAccountsAsync()).ReturnsAsync(new List<MailAccount> { account });
+        var preferences = new Mock<IPreferencesService>();
+        preferences.SetupGet(x => x.EmailSyncIntervalMinutes).Returns(60);
+        preferences.SetupGet(x => x.CalendarSyncIntervalMinutes).Returns(60);
+        // A window that started a minute ago is far from due.
+        var recent = clock.GetUtcNow().AddMinutes(-1).UtcTicks;
+        preferences.SetupProperty(x => x.TaskLastAutoSynchronizationUtcTicks, recent);
+        preferences.SetupProperty(x => x.ContactLastAutoSynchronizationUtcTicks, recent);
+        var manager = new Mock<ISynchronizationManager>();
+        manager.Setup(x => x.GetAllSynchronizers()).Returns(Array.Empty<IWinoSynchronizerBase>());
+        manager.Setup(x => x.SynchronizeTasksAsync(It.IsAny<TaskSynchronizationOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(TaskSynchronizationResult.Empty);
+        manager.Setup(x => x.SynchronizeContactsAsync(It.IsAny<ContactSynchronizationOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ContactSynchronizationResult.Empty);
+        var runtime = CreateRuntime(_ => Task.CompletedTask, clock, accounts, preferences, manager: manager);
+        await runtime.StartAsync();
+
+        await runtime.SynchronizeCreatedAccountAsync(account);
+
+        manager.Verify(x => x.SynchronizeTasksAsync(It.Is<TaskSynchronizationOptions>(o => o.AccountId == account.Id), It.IsAny<CancellationToken>()), Times.Once);
+        manager.Verify(x => x.SynchronizeContactsAsync(It.Is<ContactSynchronizationOptions>(o => o.AccountId == account.Id), It.IsAny<CancellationToken>()), Times.Once);
+        preferences.Object.TaskLastAutoSynchronizationUtcTicks.Should().Be(recent);
+        preferences.Object.ContactLastAutoSynchronizationUtcTicks.Should().Be(recent);
+        await runtime.StopAsync();
+    }
+
+    [Fact]
+    public async Task RemovingLastAccount_ResetsRareModeSynchronizationDates()
+    {
+        var account = new MailAccount { Id = Guid.NewGuid(), IsMailAccessGranted = false };
+        var accounts = new Mock<IAccountService>();
+        accounts.Setup(x => x.GetAccountsAsync()).ReturnsAsync(new List<MailAccount> { account });
+        var preferences = new Mock<IPreferencesService>();
+        preferences.SetupGet(x => x.EmailSyncIntervalMinutes).Returns(60);
+        preferences.SetupGet(x => x.CalendarSyncIntervalMinutes).Returns(60);
+        preferences.SetupProperty(x => x.TaskLastAutoSynchronizationUtcTicks, 1234L);
+        preferences.SetupProperty(x => x.ContactLastAutoSynchronizationUtcTicks, 5678L);
+        var messenger = new WeakReferenceMessenger();
+        var runtime = CreateRuntime(_ => Task.CompletedTask, new ManualTimeProvider(), accounts, preferences, messenger);
+        await runtime.StartAsync();
+        preferences.Object.TaskLastAutoSynchronizationUtcTicks.Should().Be(1234L);
+
+        var contactsReset = Signal();
+        preferences.SetupSet(x => x.ContactLastAutoSynchronizationUtcTicks = 0L).Callback(() => contactsReset.TrySetResult());
+        accounts.Setup(x => x.GetAccountsAsync()).ReturnsAsync(new List<MailAccount>());
+        messenger.Send(new AccountRemovedMessage(account));
+        await contactsReset.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        preferences.Object.TaskLastAutoSynchronizationUtcTicks.Should().Be(0L);
+        await runtime.StopAsync();
+    }
+
+    private static async Task AdvanceAndSettleAsync(ManualTimeProvider clock, TimeSpan elapsed)
+    {
+        clock.Advance(elapsed);
+        // Loop continuations run on the thread pool; give them a moment to observe the tick.
+        await Task.Delay(50);
+    }
+
     private static TaskCompletionSource Signal() => new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private static ApplicationRuntime CreateRuntime(Func<CancellationToken, Task> initialize,
         TimeProvider? clock = null, Mock<IAccountService>? accounts = null,
-        Mock<IPreferencesService>? preferences = null, IMessenger? messenger = null)
+        Mock<IPreferencesService>? preferences = null, IMessenger? messenger = null,
+        Mock<ISynchronizationManager>? manager = null)
     {
         accounts ??= new Mock<IAccountService>();
         if (accounts.Setups.Count == 0)
             accounts.Setup(x => x.GetAccountsAsync()).ReturnsAsync(new List<MailAccount>());
-        var manager = new Mock<ISynchronizationManager>();
-        manager.Setup(x => x.GetAllSynchronizers()).Returns(Array.Empty<IWinoSynchronizerBase>());
+        if (manager == null)
+        {
+            manager = new Mock<ISynchronizationManager>();
+            manager.Setup(x => x.GetAllSynchronizers()).Returns(Array.Empty<IWinoSynchronizerBase>());
+        }
         return new ApplicationRuntime(manager.Object, accounts.Object,
             (preferences ?? new Mock<IPreferencesService>()).Object,
             messenger ?? new WeakReferenceMessenger(), Mock.Of<IWinoLogger>(), initialize,

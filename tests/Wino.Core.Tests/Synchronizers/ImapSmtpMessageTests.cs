@@ -20,12 +20,14 @@ public class ImapSmtpMessageTests
             Body = new TextPart("plain") { Text = "Body" }
         };
         draftMessage.Headers.Add(Constants.WinoLocalDraftHeader, "local-draft-id");
+        draftMessage.Headers.Add(Constants.LegacyWinoLocalDraftHeader, "legacy-draft-id");
 
         draftMessage.Headers.Add("X-Wino-Draft-Revision", "revision");
         var smtpMessage = ImapSynchronizer.CreateSmtpMessage(draftMessage);
         smtpMessage.Headers.Contains("X-Wino-Draft-Revision").Should().BeFalse();
 
         smtpMessage.Headers.Contains(Constants.WinoLocalDraftHeader).Should().BeFalse();
+        smtpMessage.Headers.Contains(Constants.LegacyWinoLocalDraftHeader).Should().BeFalse();
         draftMessage.Headers[Constants.WinoLocalDraftHeader].Should().Be("local-draft-id");
         smtpMessage.Subject.Should().Be(draftMessage.Subject);
         smtpMessage.TextBody.TrimEnd().Should().Be(draftMessage.TextBody);

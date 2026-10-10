@@ -206,7 +206,7 @@ public sealed class ImapMailboxSynchronizationTests
         (await f.Sync()).Success.Should().BeTrue();
         f.Fetches.Select(fetch => fetch.Range).Should().Equal("1:200", "201:400", "401");
         f.Requests.Should().OnlyContain(request => !request.Items.HasFlag(MessageSummaryItems.Headers));
-        f.Requests.Should().OnlyContain(request => request.Headers.Contains("X-Wino-Draft-Id") && request.Headers.Contains("Disposition-Notification-To"));
+        f.Requests.Should().OnlyContain(request => request.Headers.Contains(Wino.Core.Domain.Constants.WinoLocalDraftHeader) && request.Headers.Contains(Wino.Core.Domain.Constants.LegacyWinoLocalDraftHeader) && request.Headers.Contains("Disposition-Notification-To"));
         f.Folder.HighestKnownUid.Should().Be(401);
         f.Mail.Verify(x => x.CreateMailAsync(It.IsAny<Guid>(), It.IsAny<NewMailItemPackage>()), Times.Exactly(401));
     }

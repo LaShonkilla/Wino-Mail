@@ -5,7 +5,16 @@ public static class Constants
     /// <summary>
     /// MIME header that exists in all the drafts created from Wino.
     /// </summary>
-    public const string WinoLocalDraftHeader = "X-Wino-Draft-Id";
+    public const string WinoLocalDraftHeader = "X-Draft-Id";
+
+    /// <summary>
+    /// Draft mapping header used before <see cref="WinoLocalDraftHeader"/>. Drafts created by older versions still carry it.
+    /// </summary>
+    public const string LegacyWinoLocalDraftHeader = "X-Wino-Draft-Id";
+
+    public static bool IsLocalDraftHeader(string headerName)
+        => string.Equals(headerName, WinoLocalDraftHeader, System.StringComparison.OrdinalIgnoreCase)
+           || string.Equals(headerName, LegacyWinoLocalDraftHeader, System.StringComparison.OrdinalIgnoreCase);
     public const string DispositionNotificationToHeader = "Disposition-Notification-To";
     public const string OriginalMessageIdHeader = "Original-Message-ID";
     public const string LocalDraftStartPrefix = "localDraft_";

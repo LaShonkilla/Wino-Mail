@@ -489,7 +489,7 @@ public static class OutlookIntegratorExtensions
         foreach (var header in mime.Headers)
         {
             if (headers.Count >= headerLimit) break;
-            if (header.Field == Domain.Constants.WinoLocalDraftHeader) continue;
+            if (Domain.Constants.IsLocalDraftHeader(header.Field)) continue;
             if (headersToIgnore.Contains(header.Field)) continue;
 
             // Only include custom headers beyond the core threading ones.

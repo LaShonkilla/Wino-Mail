@@ -76,6 +76,7 @@ public sealed class MailKitSmtpTransport : ISmtpTransport
 
         var smtpMessage = MimeMessage.Load(stream);
         smtpMessage.Headers.Remove(Constants.WinoLocalDraftHeader);
+        smtpMessage.Headers.Remove(Constants.LegacyWinoLocalDraftHeader);
         smtpMessage.Headers.Remove("X-Wino-Draft-Revision");
         return smtpMessage;
     }

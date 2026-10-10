@@ -2789,6 +2789,7 @@ public partial class GmailSynchronizer : WinoSynchronizer<IGoogleApiRequest, Mes
 
         // Local draft mapping header must never leak to recipients.
         singleDraftRequest.Request.Mime.Headers.Remove(Domain.Constants.WinoLocalDraftHeader);
+        singleDraftRequest.Request.Mime.Headers.Remove(Domain.Constants.LegacyWinoLocalDraftHeader);
 
         singleDraftRequest.Request.Mime.Prepare(EncodingConstraint.None);
 
@@ -4087,13 +4088,13 @@ public partial class GmailSynchronizer : WinoSynchronizer<IGoogleApiRequest, Mes
 
         var extractedContacts = ExtractContactsFromGmailMessage(message, mimeMessage);
 
-        // Check for local draft mapping using X-Wino-Draft-Id header.
+        // Check for local draft mapping using the draft id header (current or legacy name).
         // For Metadata format we read from Payload.Headers.
         // For Raw format (Payload is null), we read from parsed MIME headers.
         if (baseMailCopy.IsDraft)
         {
-            var draftIdHeader = message.Payload?.Headers?.FirstOrDefault(h => h.Name.Equals(Domain.Constants.WinoLocalDraftHeader, StringComparison.OrdinalIgnoreCase))?.Value
-                                ?? mimeMessage?.Headers?.FirstOrDefault(h => h.Field.Equals(Domain.Constants.WinoLocalDraftHeader, StringComparison.OrdinalIgnoreCase))?.Value;
+            var draftIdHeader = message.Payload?.Headers?.FirstOrDefault(h => Domain.Constants.IsLocalDraftHeader(h.Name))?.Value
+                                ?? mimeMessage?.Headers?.FirstOrDefault(h => Domain.Constants.IsLocalDraftHeader(h.Field))?.Value;
 
             if (!string.IsNullOrEmpty(draftIdHeader) && Guid.TryParse(draftIdHeader, out _))
             {

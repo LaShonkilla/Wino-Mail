@@ -507,6 +507,17 @@ public interface IPreferencesService : INotifyPropertyChanged
     int CalendarSyncIntervalMinutes { get; set; }
 
     /// <summary>
+    /// Setting: When tasks were last synchronized in the background, in UTC ticks. Zero means never.
+    /// Ticks for the same reason as <see cref="NotificationSnoozeUntilUtcTicks"/>.
+    /// </summary>
+    long TaskLastAutoSynchronizationUtcTicks { get; set; }
+
+    /// <summary>
+    /// Setting: When contacts were last synchronized in the background, in UTC ticks. Zero means never.
+    /// </summary>
+    long ContactLastAutoSynchronizationUtcTicks { get; set; }
+
+    /// <summary>
     /// Setting: Preferred time format for calendar header display.
     /// </summary>
     TimeFormatPreference CalendarTimeFormatPreference { get; set; }

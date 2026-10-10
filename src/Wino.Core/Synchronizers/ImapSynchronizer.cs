@@ -795,16 +795,8 @@ public partial class ImapSynchronizer : WinoSynchronizer<ImapRequest, ImapMessag
         // Check draft mapping.
         // This is the same implementation as in the OutlookSynchronizer.
 
-        string draftHeaderValue = null;
-
-        if (message.MimeMessage?.Headers?.Contains(Domain.Constants.WinoLocalDraftHeader) == true)
-        {
-            draftHeaderValue = message.MimeMessage.Headers[Domain.Constants.WinoLocalDraftHeader];
-        }
-        else if (message.MessageSummary?.Headers?.Contains(Domain.Constants.WinoLocalDraftHeader) == true)
-        {
-            draftHeaderValue = message.MessageSummary.Headers[Domain.Constants.WinoLocalDraftHeader];
-        }
+        var draftHeaderValue = message.MimeMessage?.Headers?.FirstOrDefault(h => Domain.Constants.IsLocalDraftHeader(h.Field))?.Value
+                               ?? message.MessageSummary?.Headers?.FirstOrDefault(h => Domain.Constants.IsLocalDraftHeader(h.Field))?.Value;
 
         if (Guid.TryParse(draftHeaderValue, out Guid localDraftCopyUniqueId))
         {

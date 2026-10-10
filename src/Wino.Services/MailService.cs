@@ -2284,12 +2284,12 @@ public class MailService : BaseDatabaseService, IMailService
         {
             Headers = { { Constants.WinoLocalDraftHeader, Guid.NewGuid().ToString() } },
         };
-        EnsureOutgoingMessageId(message);
 
         selectedAlias ??= await _accountService.GetPrimaryAccountAliasAsync(account.Id) ?? throw new MissingAliasException();
 
         // Set FromName and FromAddress by alias.
         message.From.Add(new MailboxAddress(selectedAlias.AliasSenderName ?? account.SenderName, selectedAlias.AliasAddress));
+        EnsureOutgoingMessageId(message, selectedAlias.AliasAddress);
 
         if (!string.IsNullOrWhiteSpace(selectedAlias.ReplyToAddress))
         {
@@ -2897,12 +2897,12 @@ SELECT EXISTS(
         return ownAddresses;
     }
 
-    private static void EnsureOutgoingMessageId(MimeMessage message)
+    private static void EnsureOutgoingMessageId(MimeMessage message, string senderAddress)
     {
         if (message == null)
             return;
 
-        var messageId = MailHeaderExtensions.NormalizeMessageId(MessageIdGenerator.Generate());
+        var messageId = MailHeaderExtensions.NormalizeMessageId(MessageIdGenerator.Generate(senderAddress));
 
         if (string.IsNullOrEmpty(messageId))
             return;

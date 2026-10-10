@@ -2391,7 +2391,7 @@ public partial class OutlookSynchronizer : WinoSynchronizer<RequestInformation, 
         if (message.IsDraft.GetValueOrDefault() && message.InternetMessageHeaders != null)
         {
             var winoDraftHeader = message.InternetMessageHeaders
-                .FirstOrDefault(h => string.Equals(h.Name, Domain.Constants.WinoLocalDraftHeader, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(h => Domain.Constants.IsLocalDraftHeader(h.Name));
 
             if (winoDraftHeader != null && Guid.TryParse(winoDraftHeader.Value, out Guid localDraftCopyUniqueId))
             {
